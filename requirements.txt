@@ -46,4 +46,8 @@ urllib3==2.4.0
 Werkzeug==3.1.3
 # If you want to use GPU, PyTorch must be installed separately based on your CUDA version:
 # Visit https://pytorch.org/get-started/locally/ and install the correct version.
+<<<<<<< HEAD
 # Example (for CUDA 11.8): pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+=======
+# Example (for CUDA 11.8): pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+>>>>>>> 0b0f754cac0b07116bc75ca00fbfd46cc3695346

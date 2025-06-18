@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Moon Crater & Boulder Detection</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: rgb(41, 38, 38);
+      color: white;
+      overflow-x: hidden;
+    }
+
+    h1, h2 {
+      margin: 0 0 10px;
+    }
+
+    .moon3d {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70vmin;
+      height: 70vmin;
+      transition: left 1s ease, transform 1s ease;
+      z-index: -1000;
+      pointer-events: none;
+    }
+
+    .moon3d.scrolled {
+      left: 20%;
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      background-color: rgb(41, 38, 38);;
+    }
+
+    .container {
+      min-height: 120vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .panels {
+      display: flex;
+      width: 90%;
+      height: 70%;
+      margin-top: 80px;
+      gap: 20px;
+      z-index: 1;
+    }
+
+    .panel {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0px 0px 20px rgb(170, 157, 157);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    input[type="file"], button {
+      margin-top: 10px;
+      background: transparent;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    input[type="file"] {
+      background-color: grey;
+    }
+
+    #uploadImage, #outputImage {
+      max-width: 100%;
+      max-height: 52vh;
+      object-fit: contain;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+
+    #uploadImage {
+      display: block;
+      margin-right: auto;
+      margin-left: 0;
+    }
+
+    #outputImage{
+      display: block;
+      margin-left: auto;
+      margin-right: 0;
+    }
+
+    #processing {
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    .faq-section {
+      position: absolute;
+      bottom: 0;
+      width: 100vw;
+      height: 90px;
+      background: rgba(255, 255, 255, 0.05);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0px 0px 20px rgb(170, 157, 157);
+      overflow: hidden;
+      transition: all 1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .faq {
+      text-align: left;
+      opacity: 0.8;
+      max-height: 80px;
+      overflow: hidden;
+      transition: all 1s ease;
+    }
+
+    .faq-section.scrolled {
+      width: 45vw;
+      height: auto;
+      max-height: 80vh;
+      right: 5vw;
+      left: auto;
+      top: 50%;
+      bottom: auto;
+      box-shadow: 0px 0px 20px rgb(170, 157, 157);
+      transform: translateY(-50%);
+      border-radius: 10px;
+      padding: 20px;
+      overflow-y: auto;
+      position: fixed;
+    }
+
+    .faq-section.scrolled .faq {
+      max-height: none;
+      opacity: 1;
+    }
+
+    #starCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -2000;
+      background: rgb(41, 38, 38);
+    }
+
+    .imageButtons {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    #clearBtn {
+      background-color: red;
+      color: white;
+      border-radius: 7px;
+      border: none;
+    }
+
+    #clearBtn:hover {
+      opacity: 0.9;
+      scale: 1.1;
+    }
+
+    #downloadBtn {
+      background-color: rgb(70, 145, 192);
+      color: white;
+      border-radius: 7px;
+      border: none;
+      margin-left: 10px;
+      display: none;
+    }
+
+    #downloadBtn:hover {
+      opacity: 0.9;
+      scale: 1.1;
+    }
+
+    #cameraBtn {
+      background-color: goldenrod;
+      color: white;
+      border-radius: 7px;
+      border: none;
+    }
+
+    #cameraBtn:hover {
+      opacity: 0.9;
+      scale: 1.1;
+    }
+
+    #detectBtn {
+      background-color: green;
+      color: white;
+      border-radius: 7px;
+      border: none;
+    }
+
+    #detectBtn:hover {
+      opacity: 0.9;
+      scale: 1.1;
+    }
+
+    #emptyclass {
+      min-height: 50vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .panels {
+      transition: opacity 0.8s ease;
+    }
+
+    .panels.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #contactFooter {
+      display:none;
+      margin: 3px; 
+      width:100%; 
+      background: rgba(255, 255, 255, 0.05);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0px 0px 20px rgb(170, 157, 157);
+      padding:20px; 
+      text-align:center; 
+      color:white; 
+      position:fixed; 
+      bottom:0; 
+      left:0; 
+      z-index:100;
+    }
+
+    .visible {
+      display: flex !important;
+      justify-content: space-around;
+      text-align: center;
+      align-items: center;
+    }
+
+    .fa-instagram{
+      background-color: rgb(232, 121, 140);
+      color: white;
+      border-radius: 8px;
+      padding: 3px;
+      padding-top: 2px;
+      font-size: 25px;
+    }
+
+    p {
+      font-size: 20px;
+    }
+
+    a.insta:hover {
+      opacity: 0.5;
+      scale: 1.2;
+      cursor: pointer;
+    }
+
+@media screen and (max-width: 1000px) {
+  .panels {
+    flex-direction: column;
+    height: auto;
+  }
+
+  #emptyclass{
+    min-height: 30vh !important;
+    max-height: 40vh;
+    height: auto;
+  }
+
+  .container{
+    min-height: unset !important;
+    height: auto;
+  }
+
+  .faq-section {
+    position: relative;
+    width: 100%;
+    height: auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px rgb(170, 157, 157);
+    margin-top: 30px;
+    overflow: visible;
+  }
+
+  .faq {
+    max-height: none;
+    opacity: 1;
+  }
+
+  .moon3d {
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
+
+  #contactFooter {
+    position: relative;
+    display: flex !important;
+    justify-content: space-around;
+    margin-top: 40px;
+  }
+
+  #outputImage {
+    margin-right: auto;
+    margin-left: 0;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+
+<canvas id="starCanvas"></canvas>
+
+<div class="moon3d" id="moonContainer">
+  <model-viewer
+    id="moon"
+    src="/static/moon.glb"
+    alt="Moon 3D"
+    camera-controls
+    auto-rotate
+    auto-rotate-delay="0"
+    disable-zoom
+    exposure="0.8"
+    camera-orbit="0deg 30deg 5m"
+    interaction-prompt="none"
+  ></model-viewer>
+</div>
+
+<div class="container">
+  <h1>Moon Crater & Boulder Detection</h1>
+  
+  <div class="panels">
+    
+    <div class="panel">
+      <h2>Upload or Capture Image</h2>
+      
+      <div id="emptyclass">
+        <img id="uploadImage" alt="Select An Image" />
+      </div>
+      
+      <div class="imageButtons">
+        <button id="cameraBtn">Use Camera</button>
+        <input type="file" id="fileInput" accept="image/*" />
+        <button id="clearBtn">Clear</button>
+        <button id="detectBtn">Detect</button>
+      </div>
+
+    </div>
+
+    <div class="panel">
+      <h2>Detection Output</h2>
+
+      <div id="emptyclass">
+        <img id="outputImage" alt="Output will appear here" />
+        
+        <div style="display: flex; justify-content: space-around;">
+          <div id="processing"></div>
+        
+          <button id="downloadBtn">Download</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="faq-section" id="faqSection">
+  <div class="faq">
+    <h1 style="text-align: center;">👨‍🚀 Got Questions? We’ve Got Answers &#11167;</h1>
+    <p><strong>Q:</strong> What does this project do?<br><strong>A:</strong> It detects and highlights craters in lunar surface images.</p>
+    <p><strong>Q:</strong> What is a crater?<br><strong>A:</strong> A crater is a bowl-shaped depression on the surface of the Moon. Craters vary in size from small pits to massive basins.</p>
+    <p><strong>Q:</strong> What type of images can I upload?<br><strong>A:</strong> High-resolution satellite or lunar surface images in formats like PNG or JPG work best.</p>
+    <p><strong>Q:</strong> Can I capture a live image using a camera?<br><strong>A:</strong> Yes! You can either upload an image or use your device's camera to capture one directly from the interface.</p>
+    <p><strong>Q:</strong> How long does crater detection take?<br><strong>A:</strong> typically takes a few(1-2) seconds.</p>
+  </div>
+</div>
+
+<footer id="contactFooter">
+  <div class="contact">
+    <h2 style="color: rgb(218, 218, 50);">Contact Us</h2>
+    <div style="margin-top:10px;">
+      <a class="insta" href="https://www.instagram.com/yv_sai_hitesh/" target="_blank" style="margin: 0 15px; color: #f8f8f8; text-decoration: none;"><i class="fa fa-instagram"></i> Hitesh</a>
+      <a class="insta" href="https://www.instagram.com/bandikatlavivekkumar/" target="_blank" style="margin: 0 15px; color: #f8f8f8; text-decoration: none;"><i class="fa fa-instagram"></i> Vivek</a>
+      <a class="insta" href="https://www.instagram.com/dksrishi/" target="_blank" style="margin: 0 15px; color: #f8f8f8; text-decoration: none;"><i class="fa fa-instagram"></i> Rishi</a>
+    </div>
+  </div>
+
+  <div class="message">
+    <h2 style="color: yellow;">-Thank You</h2>
+  </div>
+
+  <div class="more-info">
+    <h2 style="color: orange;">More Info</h2>
+    <div class="articles">
+      <a class="insta" href="https://en.wikipedia.org/wiki/Lunar_craters" target="_blank" style="margin: 0 15px; color: rgb(127, 127, 232); text-decoration: none; font-size: 18px;">About Crater</a>
+      <a class="insta" href="https://en.wikipedia.org/wiki/Lunar_craters" target="_blank" style="margin: 0 15px; color: rgb(127, 127, 232); text-decoration: none; font-size: 18px;">GitHub Link</a>
+    </div>
+  </div>
+</footer>
+
+<div id="cameraModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center; flex-direction:column;">
+  <video id="cameraPreview" autoplay playsinline style="max-width:90vw; max-height:80vh; border:4px solid white; border-radius:10px;"></video>
+  <button id="captureBtn" style="margin-top:20px; padding:10px 20px; font-size:16px; background-color:goldenrod; color:white; border:none; border-radius:5px;">Capture</button>
+  <button id="closeCameraBtn" style="margin-top:10px; padding:5px 15px; background:red; color:white; border:none; border-radius:4px;">Close</button>
+</div>
+
+<script>
+  const moonContainer = document.getElementById("moonContainer");
+  const faqSection = document.getElementById("faqSection");
+  const fileInput = document.getElementById("fileInput");
+  const uploadImage = document.getElementById("uploadImage");
+  const outputImage = document.getElementById("outputImage");
+  const detectBtn = document.getElementById("detectBtn");
+  const processing = document.getElementById("processing");
+  const clearBtn = document.getElementById("clearBtn");
+  const emptyClass = document.getElementById("emptyclass");
+  const canvas = document.getElementById('starCanvas');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  const cameraBtn = document.getElementById("cameraBtn");
+  const cameraModal = document.getElementById("cameraModal");
+  const cameraPreview = document.getElementById("cameraPreview");
+  const captureBtn = document.getElementById("captureBtn");
+  const closeCameraBtn = document.getElementById("closeCameraBtn");
+  let mediaStream = null;
+  const footer = document.getElementById("contactFooter");
+  const downloadBtn = document.getElementById("downloadBtn");
+
+cameraBtn.addEventListener("click", async () => {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    cameraPreview.srcObject = mediaStream;
+    cameraModal.style.display = "flex";
+  } catch (err) {
+    alert("Camera access denied or not available.");
+    console.error(err);
+  }
+});
+
+closeCameraBtn.addEventListener("click", () => {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop());
+  }
+  cameraModal.style.display = "none";
+});
+
+captureBtn.addEventListener("click", () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = cameraPreview.videoWidth;
+  canvas.height = cameraPreview.videoHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(cameraPreview, 0, 0);
+
+  canvas.toBlob(blob => {
+    const file = new File([blob], "captured_image.png", { type: "image/png" });
+    const imageURL = URL.createObjectURL(blob);
+    uploadImage.src = imageURL;
+
+    // simulate file input with captured blob
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    fileInput.files = dataTransfer.files;
+  });
+
+  // Close camera
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop());
+  }
+  cameraModal.style.display = "none";
+});
+
+  document.addEventListener('mousemove', (event) => {
+    const percentX = event.clientX / window.innerWidth;
+    const percentY = event.clientY / window.innerHeight;
+    const theta = (percentX - 0.5) * 360;
+    const phi = 90 - percentY * 180;
+    moon.cameraOrbit = `${theta.toFixed(1)}deg ${phi.toFixed(1)}deg 5m`;
+  });
+  // Scroll to activate effects
+  let lastScrollTop = 0;
+const panels = document.querySelector(".panels");
+
+window.addEventListener("scroll", () => {
+  const st = window.pageYOffset || document.documentElement.scrollTop;
+
+  if (window.innerWidth >= 1000) {
+    if (st > lastScrollTop) {
+      panels.classList.add("hidden");
+      moonContainer.classList.add("scrolled");
+      faqSection.classList.add("scrolled");
+      footer.classList.add("visible");
+    } else {
+      panels.classList.remove("hidden");
+      moonContainer.classList.remove("scrolled");
+      faqSection.classList.remove("scrolled");
+      footer.classList.remove("visible");
+    }
+  }
+
+  lastScrollTop = st <= 0 ? 0 : st;
+});
+
+
+
+
+
+  // File upload
+  fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  if (file) {
+    const img = new Image();
+    img.onload = () => {
+      const container = document.getElementById("emptyclass");
+      container.style.minHeight = img.height > 300 ? "50vh" : "40vh";
+      uploadImage.src = img.src;
+    };
+    img.src = URL.createObjectURL(file);
+  }
+});
+
+
+  // Clear button
+  clearBtn.addEventListener("click", () => {
+    fileInput.value = "";
+    uploadImage.src = "";
+    outputImage.src = "";
+    processing.textContent = "";
+    downloadBtn.style.display = "none";
+  });
+
+  // Detection
+  detectBtn.addEventListener("click", async () => {
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("Please upload an image first.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  processing.textContent = "Detecting...";
+
+  const startTime = performance.now(); // Start timing
+
+  const res = await fetch("/detect", { method: "POST", body: formData });
+  const blob = await res.blob();
+
+  const endTime = performance.now(); // End timing
+  const timeTaken = ((endTime - startTime) / 1000).toFixed(2); // in seconds
+
+  const imageUrl = URL.createObjectURL(blob);
+outputImage.src = imageUrl;
+processing.innerHTML = `Green Boxes - Craters<br> Time taken: <strong>${timeTaken} seconds</strong>`;
+
+// Show and configure download button
+downloadBtn.style.display = "flex";
+downloadBtn.onclick = () => {
+  const link = document.createElement("a");
+  link.href = imageUrl;
+  link.download = "crater_detection_output.png";
+  link.click();
+};
+
+});
+
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function createStars(count) {
+  stars = [];
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() < 0.1 ? Math.random() * 3 + 2 : Math.random() * 2.5 + 1.2,
+      alpha: Math.random(),
+      delta: Math.random() * 0.02
+    });
+  }
+}
+
+function drawStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let star of stars) {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+    ctx.fill();
+    star.alpha += star.delta;
+    if (star.alpha <= 0 || star.alpha >= 1) star.delta = -star.delta;
+  }
+  requestAnimationFrame(drawStars);
+}
+
+createStars(150); // you can increase for denser star field
+drawStars();
+
+
+</script>
+
+</body>
+</html>

@@ -87,12 +87,14 @@ python outputImages.py
 python predictLabels.py
 ```
 
-### 5. Launch the Web App
+### 6. Launch the Web App
 ```bash
 python app.py
 ```
 Then open your browser at: [http://localhost:5000](http://localhost:5000)
 
+### 7. Deployed Website Public link
+[https://huggingface.co/spaces/yvsaihitesh/crater_detector](https://huggingface.co/spaces/yvsaihitesh/crater_detector)
 ---
 
 ## 📈 Evaluation Metrics (Displayed Per Epoch)

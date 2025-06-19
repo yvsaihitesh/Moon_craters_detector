@@ -1,10 +1,3 @@
-import torch
-from torch.serialization import add_safe_globals
-from torch.nn import Sequential
-from ultralytics.nn.tasks import DetectionModel
-
-# Allow these classes for safe model loading
-add_safe_globals([Sequential, DetectionModel])
 from ultralytics import YOLO
 
 # Function to print metrics after every epoch to evaluate

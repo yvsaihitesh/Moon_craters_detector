@@ -1,8 +1,0 @@
-yolov10s.pt
-*.csv
-*.npy
-*.log
-labels/
-inputImages/
-outputImages/
-__pycache__/

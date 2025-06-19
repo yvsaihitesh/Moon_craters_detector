@@ -63,8 +63,8 @@ moon-craters-detector/
 
 ### 1. Clone the Repo
 ```bash
-git clone https://github.com/yourusername/moon-craters-detector.git
-cd moon-craters-detector
+git clone https://github.com/yvsaihitesh/Moon_craters_detector.git
+cd Moon_craters_detector
 ```
 
 ### 2. Install Requirements
@@ -77,12 +77,12 @@ pip install -r requirements.txt
 python train.py
 ```
 
-### 4. Visualize Detected Craters Images
+### 4. Visualize Detected Craters test Images
 ```bash
 python outputImages.py
 ```
 
-### 5. Visualize Detected Craters Labels
+### 5. Visualize Detected Craters test Labels
 ```bash
 python predictLabels.py
 ```
